@@ -6,18 +6,30 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <title>Login page</title>
+    <style>
+      #eth {
+        background: #f6851b;
+        padding: 20px 10px;
+        list-style-type: none;
+        display: inline-block;
+        margin: 0 10px 0 0;
+        font-size: 18px;
+      }
+    </style>
   </head>
 
   <body>
     <a id="eth" onclick="ethClicked()">Login with Ethereum account</a>
 
-    <h3 id="showAddress"></h3>
+    <!-- <p><%= nonce %></p> -->
+
+    <h3 id="showSignature">signed message:</h3>
   </body>
 
   <script>
     async function ethClicked() {
       // $("#eth").load("/eth-login");
-      let theAddress;
+      let signedMessage;
 
       if (window.ethereum) {
         window.web3 = new Web3(ethereum);
@@ -25,14 +37,35 @@
           await ethereum.enable();
 
           console.log(web3.eth.coinbase);
-          signedM = await web3.personal.sign(
-            web3.fromUtf8("Hello world!"),
+          await web3.personal.sign(
+            web3.fromUtf8(
+              "You should sign the challege string: '<%=nonce %>' to verify your identity."
+            ),
             web3.eth.coinbase,
             function(err, signature) {
-              theAddress = signature;
+              signedMessage = signature;
               console.log(signature);
 
-              $("#showAddress").html(theAddress);
+              $("#showSignature").append(signedMessage);
+
+              const userData = {
+                address: web3.eth.coinbase,
+                signature: signedMessage
+              };
+
+              $.post({
+                traditional: true,
+                url: "/logged",
+                contentType: "application/json",
+                data: JSON.stringify(userData),
+                dataType: "json",
+                success: function(response) {
+                  console.log(response);
+                }
+              });
+
+              // redirect to main page
+              window.location = "/profile";
             }
           );
         } catch {

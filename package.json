@@ -18,6 +18,8 @@
   },
   "homepage": "https://github.com/RobinHung/ethereum-auth#readme",
   "dependencies": {
+    "body-parser": "^1.18.3",
+    "crypto": "^1.0.1",
     "ejs": "^2.6.1",
     "express": "^4.16.4",
     "web3": "^1.0.0-beta.36"
