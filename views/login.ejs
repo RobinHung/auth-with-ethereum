@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <title>Login page</title>
+  </head>
+
+  <body>
+    <a id="eth" onclick="ethClicked()">Login with Ethereum account</a>
+
+    <h3 id="showAddress"></h3>
+  </body>
+
+  <script>
+    async function ethClicked() {
+      // $("#eth").load("/eth-login");
+      let theAddress;
+
+      if (window.ethereum) {
+        window.web3 = new Web3(ethereum);
+        try {
+          await ethereum.enable();
+
+          console.log(web3.eth.coinbase);
+          signedM = await web3.personal.sign(
+            web3.fromUtf8("Hello world!"),
+            web3.eth.coinbase,
+            function(err, signature) {
+              theAddress = signature;
+              console.log(signature);
+
+              $("#showAddress").html(theAddress);
+            }
+          );
+        } catch {
+          console.log("Oops some error occured!");
+        }
+      } else {
+        console.log("No Web3 provider detected!");
+      }
+    }
+  </script>
+</html>

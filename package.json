@@ -1,0 +1,25 @@
+{
+  "name": "ethereum-auth",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "start": "nodemon app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RobinHung/ethereum-auth.git"
+  },
+  "author": "Robin Hung",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/RobinHung/ethereum-auth/issues"
+  },
+  "homepage": "https://github.com/RobinHung/ethereum-auth#readme",
+  "dependencies": {
+    "ejs": "^2.6.1",
+    "express": "^4.16.4",
+    "web3": "^1.0.0-beta.36"
+  }
+}
