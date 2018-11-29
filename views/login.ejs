@@ -39,10 +39,12 @@
           console.log(web3.eth.coinbase);
           await web3.personal.sign(
             web3.fromUtf8(
-              "You should sign the challege string: '<%=nonce %>' to verify your identity."
+              // Message will be encoded in Hex
+              "You're about to sign this random string: '<%=nonce %>' to prove your identity."
             ),
             web3.eth.coinbase,
             function(err, signature) {
+              // Callback function for `web3.personal.sign`
               signedMessage = signature;
               console.log(signature);
 

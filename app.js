@@ -2,6 +2,8 @@ const express = require("express");
 const Web3 = require("web3");
 const crypto = require("crypto");
 const bodyParser = require("body-parser");
+const ethUtil = require("ethereumjs-util");
+const sigUtil = require("eth-sig-util");
 
 // const web3 = new Web3(
 //   Web3.givenProvider ||
@@ -59,47 +61,33 @@ const isLogin = (req, res, next) => {
   }
 };
 
-// @dev: Server verifying the signature sent from client
-const verifySignature = (req, res, next) => {
-  web3.eth.personal.ecRecover(tempNonce, userData.signature).then(console.log);
+const verify = (req, res, next) => {
+  const msg = `You're about to sign this random string: ${tempNonce} to prove your identity.`;
+  const msgBufferHex = ethUtil.bufferToHex(Buffer.from(msg, "utf8"));
+  const addr = sigUtil.recoverPersonalSignature(
+    msgBufferHex,
+    userData.signature
+  );
 
+  console.log(addr);
   next();
-
-  // await web3.eth.personal.ecRecover(
-  //   tempNonce,
-  //   userData.signature,
-  //   (err, addr) => {
-  //     console.log(addr);
-
-  //     if (addr != userData.address) {
-  //       console.log("OOPS!");
-  //       res.redirect("/");
-  //     } else {
-  //       // verify signature success
-  //       console.log("verified!");
-  //       next();
-  //     }
-  //   }
-  // );
-
-  // if (addr != userData.address) {
-  //   console.log("OOPS!");
-  //   res.redirect("/");
-  // } else {
-  //   // verify signature success
-  //   console.log("verified!");
-  //   next();
-  // }
 };
 
-// @dev: currently disable verifySignature
-app.get("/profile", isLogin, verifySignature, (req, res) => {
-  res.render("profile", { user: userData.address });
-});
+app.get("/profile", isLogin, (req, res) => {
+  // Verify the address from the signed signature!
+  const msg = `You're about to sign this random string: '${tempNonce}' to prove your identity.`;
+  const msgBufferHex = ethUtil.bufferToHex(Buffer.from(msg, "utf8"));
+  const recoveredAddress = sigUtil.recoverPersonalSignature({
+    data: msgBufferHex,
+    sig: userData.signature
+  });
 
-// app.get("/profile", isLogin, (req, res) => {
-//   res.render("profile", { user: userData.address });
-// });
+  if (recoveredAddress == userData.address) {
+    res.render("profile", { user: recoveredAddress });
+  } else {
+    res.send("Opps! The address verification failed!");
+  }
+});
 
 app.listen(9487, () => {
   console.log("app now listening on port 9487...");
