@@ -61,18 +61,6 @@ const isLogin = (req, res, next) => {
   }
 };
 
-const verify = (req, res, next) => {
-  const msg = `You're about to sign this random string: ${tempNonce} to prove your identity.`;
-  const msgBufferHex = ethUtil.bufferToHex(Buffer.from(msg, "utf8"));
-  const addr = sigUtil.recoverPersonalSignature(
-    msgBufferHex,
-    userData.signature
-  );
-
-  console.log(addr);
-  next();
-};
-
 app.get("/profile", isLogin, (req, res) => {
   // Verify the address from the signed signature!
   const msg = `You're about to sign this random string: '${tempNonce}' to prove your identity.`;
