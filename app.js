@@ -36,7 +36,7 @@ app.get("/", (req, res) => {
   //   console.log("no web3!");
   // }
 
-  console.log(web3.currentProvider);
+  // console.log(web3.currentProvider);
   res.render("main");
 });
 
