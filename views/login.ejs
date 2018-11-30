@@ -117,29 +117,34 @@
             web3.eth.coinbase,
             function(err, signature) {
               // Callback function for `web3.personal.sign`
-              signedMessage = signature;
-              console.log(signature);
+              if (!err) {
+                signedMessage = signature;
+                console.log(signature);
 
-              $("#showSignature").append(signedMessage);
+                $("#showSignature").append(signedMessage);
 
-              const userData = {
-                address: web3.eth.coinbase,
-                signature: signedMessage
-              };
+                const userData = {
+                  address: web3.eth.coinbase,
+                  signature: signedMessage
+                };
 
-              $.post({
-                traditional: true,
-                url: "/ethinfo",
-                contentType: "application/json",
-                data: JSON.stringify(userData),
-                dataType: "json",
-                success: function(response) {
-                  console.log(response);
-                }
-              });
+                $.post({
+                  traditional: true,
+                  url: "/ethinfo",
+                  contentType: "application/json",
+                  data: JSON.stringify(userData),
+                  dataType: "json",
+                  success: function(response) {
+                    console.log(response);
+                  }
+                });
 
-              // redirect to main page
-              window.location = "/profile";
+                // redirect to main page
+                window.location = "/profile";
+              } else {
+                // error occurs!
+                console.log("WHY cancel the signing request :(");
+              }
             }
           );
         } catch {
