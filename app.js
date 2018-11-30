@@ -24,6 +24,7 @@ const app = express();
 
 let userData;
 let tempNonce;
+let loginStatus = false;
 
 // set up view engine
 app.set("view engine", "ejs");
@@ -32,18 +33,19 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
 app.get("/", (req, res) => {
-  // if (typeof web3 === "undefined") {
-  //   console.log("no web3!");
-  // }
-
-  // console.log(web3.currentProvider);
   res.render("main");
 });
 
 app.get("/login", (req, res) => {
-  let nonce = crypto.randomBytes(10).toString("hex");
-  tempNonce = nonce;
-  res.render("login", { nonce: nonce });
+  if (userData != null) {
+    // user is already logged in
+    res.redirect("/");
+  } else {
+    // not logged in, default
+    let nonce = crypto.randomBytes(10).toString("hex");
+    tempNonce = nonce;
+    res.render("login", { nonce: nonce });
+  }
 });
 
 app.post("/ethinfo", (req, res) => {
@@ -74,7 +76,16 @@ app.get("/profile", isLogin, (req, res) => {
     res.render("profile", { user: recoveredAddress });
   } else {
     res.send("Opps! The address verification failed!");
+    userData = null;
   }
+});
+
+app.get("/logout", (req, res) => {
+  if (userData != null) {
+    // clear user information
+    userData = null;
+  }
+  res.redirect("/");
 });
 
 app.listen(9487, () => {
