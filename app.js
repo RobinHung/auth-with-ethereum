@@ -10,6 +10,7 @@ const cookieParser = require("cookie-parser");
 const keys = require("./config/keys");
 const logger = require("morgan");
 const User = require("./models/user-model");
+const MongoStore = require("connect-mongo")(session);
 
 // @dev: passport.js related
 const passport = require("passport");
@@ -45,19 +46,6 @@ app.use(bodyParser.json());
 
 app.use(cookieParser());
 
-app.use(
-  session({
-    secret: "keyboard cat",
-    resave: false,
-    saveUninitialized: false // only create cookies when user is logged in
-    // cookie: { secure: true }
-  })
-);
-
-// @dev: passport.js related
-app.use(passport.initialize());
-app.use(passport.session());
-
 mongoose.connect(
   keys.mongodb.dbURI,
   { useNewUrlParser: true },
@@ -65,6 +53,47 @@ mongoose.connect(
     console.log("connected to mLab MongoDB");
   }
 );
+
+app.use(
+  session({
+    secret: "keyboard cat",
+    resave: false,
+    saveUninitialized: false, // only create cookies when user is logged in
+    // cookie: { secure: true }
+    store: new MongoStore({
+      mongooseConnection: mongoose.connection,
+      ttl: 2 * 24 * 60 * 60 // expires after two days
+    })
+  })
+);
+
+// @dev: passport.js related
+app.use(passport.initialize());
+app.use(passport.session());
+
+// @dev: passport.js related
+passport.serializeUser(function(user, done) {
+  done(null, user.id);
+});
+
+passport.deserializeUser(function(id, done) {
+  User.findById(id, function(err, user) {
+    done(err, user);
+  });
+});
+
+const checkAuth = (req, res, next) => {
+  console.log(
+    `req.session.passport.user: ${JSON.stringify(req.session.passport)}`
+  );
+
+  if (req.isAuthenticated()) {
+    return next();
+  } else {
+    console.log("** Not authenticated! **");
+    res.redirect("/login");
+  }
+};
 
 app.get("/", (req, res) => {
   // web3.eth.net.getNetworkType().then(console.log);
@@ -75,33 +104,22 @@ app.get("/", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-  if (userData != null) {
-    // user is already logged in
-    res.redirect("/");
+  if (req.isAuthenticated()) {
+    // user is already authenticated!
+    res.redirect("/profile");
   } else {
-    // not logged in, default
     let nonce = crypto.randomBytes(10).toString("hex");
     tempNonce = nonce;
     res.render("login", { nonce: nonce });
   }
 });
 
-app.post("/ethinfo", (req, res) => {
+// Verify the signature after the client signs the nonce and passes the signature
+app.post("/submit", (req, res) => {
   // res.render("profile", { user: req.body.address });
   userData = req.body;
   console.log(req.body);
-});
 
-const isLogin = (req, res, next) => {
-  if (userData == null) {
-    // Not logged in!
-    res.redirect("/login");
-  } else {
-    next();
-  }
-};
-
-app.get("/profile", isLogin, (req, res) => {
   // Verify the address from the signed signature!
   const msg = `You're about to sign this random string: '${tempNonce}' to prove your identity.`;
   const msgBufferHex = ethUtil.bufferToHex(Buffer.from(msg, "utf8"));
@@ -110,12 +128,14 @@ app.get("/profile", isLogin, (req, res) => {
     sig: userData.signature
   });
 
-  console.log(tempNonce);
+  console.log("=========");
 
   if (recoveredAddress == userData.address) {
+    console.log("verified!");
     User.findOne({ address: recoveredAddress }).then(currentUser => {
       if (currentUser) {
         // if found user in DB
+        console.log("Found user: " + currentUser);
 
         currentUser.loginCount += 1;
         // TODO: update nonce
@@ -123,11 +143,14 @@ app.get("/profile", isLogin, (req, res) => {
         currentUser.save((err, updatedUser) => {
           // after login() function, will call `serializeUser()`
           // and return the userID from database
-          req.login(currentUser, err => {
-            res.render("profile", {
-              user: req.user.address,
-              loginCount: req.user.loginCount
-            });
+          req.login(updatedUser, err => {
+            console.log("*** LOGIN? ***");
+
+            if (err) {
+              console.log(err);
+            }
+
+            return res.redirect("/profile");
           });
         });
       } else {
@@ -143,39 +166,32 @@ app.get("/profile", isLogin, (req, res) => {
             console.log("new user created: " + newUser);
 
             req.login(newUser, err => {
-              res.render("profile", {
-                user: req.user.address,
-                loginCount: req.user.loginCount
-              });
+              return res.redirect("/profile");
             });
           });
       }
     });
-
-    // res.render("profile", { user: req.user });
   } else {
     res.send("Opps! The address verification failed!");
     userData = null;
   }
 });
 
-app.get("/logout", (req, res) => {
-  if (userData != null) {
-    // clear user information
-    userData = null;
-  }
-  res.redirect("/");
+app.get("/verify", (req, res) => {
+  res.send("verifying...");
 });
 
-// @dev: passport.js related
-passport.serializeUser(function(user, done) {
-  done(null, user.id);
-});
-
-passport.deserializeUser(function(id, done) {
-  User.findById(id, function(err, user) {
-    done(err, user);
+app.get("/profile", checkAuth, (req, res) => {
+  res.render("profile", {
+    user: req.user.address,
+    loginCount: req.user.loginCount
   });
+});
+
+app.get("/logout", (req, res) => {
+  req.logout();
+  req.session.destroy();
+  res.redirect("/");
 });
 
 app.listen(9487, () => {

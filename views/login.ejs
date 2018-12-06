@@ -130,7 +130,7 @@
 
                 $.post({
                   traditional: true,
-                  url: "/ethinfo",
+                  url: "/submit",
                   contentType: "application/json",
                   data: JSON.stringify(userData),
                   dataType: "json",
@@ -139,8 +139,8 @@
                   }
                 });
 
-                // redirect to main page
-                window.location = "/profile";
+                // window.location.assign("/profile");
+                window.location.href = "/profile";
               } else {
                 // error occurs!
                 console.log("WHY cancel the signing request :(");
