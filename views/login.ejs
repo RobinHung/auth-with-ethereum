@@ -135,12 +135,18 @@
                   data: JSON.stringify(userData),
                   dataType: "json",
                   success: function(response) {
-                    console.log(response);
+                    // @dev: NOT triggered!
+                    console.log(response.status);
+                    if (response.status == 200) {
+                      window.location.href = "/profile";
+                    }
+                  },
+                  complete: function(response) {
+                    // @dev: successfully triggered :)
+                    console.log(response.status);
+                    window.location.href = "/profile";
                   }
                 });
-
-                // window.location.assign("/profile");
-                window.location.href = "/profile";
               } else {
                 // error occurs!
                 console.log("WHY cancel the signing request :(");
