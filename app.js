@@ -56,10 +56,11 @@ mongoose.connect(
 
 app.use(
   session({
-    secret: "keyboard cat",
+    secret: keys.session.cookieKey,
     resave: false,
     saveUninitialized: false, // only create cookies when user is logged in
     // cookie: { secure: true }
+    // Persistent Session Store
     store: new MongoStore({
       mongooseConnection: mongoose.connection,
       ttl: 2 * 24 * 60 * 60 // expires after two days
@@ -175,10 +176,6 @@ app.post("/submit", (req, res) => {
     res.send("Opps! The address verification failed!");
     userData = null;
   }
-});
-
-app.get("/verify", (req, res) => {
-  res.send("verifying...");
 });
 
 app.get("/profile", checkAuth, (req, res) => {
